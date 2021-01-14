@@ -1,69 +1,69 @@
 import React from 'react';
-import { interval, fromEvent } from 'rxjs';
-import { startWith, scan, share, buffer, debounceTime } from 'rxjs/operators';
+import {fromEvent, interval} from 'rxjs';
+import {buffer, debounceTime, scan, share, startWith} from 'rxjs/operators';
 import './App.css';
 
 const App = () => {
-	const [pause, setPause] = React.useState(true);
-	const [currentTime, setTime] = React.useState(0);
-	const waitButton = React.useRef(null);
+    const [pause, setPause] = React.useState(true);
+    const [currentTime, setTime] = React.useState(0);
+    const waitButton = React.useRef(null);
 
-  	let timer$ = interval(1000);
+    let timer$ = interval(1000);
 
-  	React.useEffect(() => {
-    	let startCount$ = timer$.pipe(
-        	startWith(currentTime),
-        	scan(time => time + 1),
-        	share(),
-		)
-		  
-		let currentTimer$ = startCount$.subscribe(i => {
-        	if (!pause) {
-          		setTime(i);
-        	}
-      	});
+    React.useEffect(() => {
+        let startCount$ = timer$.pipe(
+            startWith(currentTime),
+            scan(time => time + 1),
+            share(),
+        )
 
-    	return () => currentTimer$.unsubscribe();
-  	}, [pause, currentTime, timer$]);
+        let currentTimer$ = startCount$.subscribe(i => {
+            if (!pause) {
+                setTime(i);
+            }
+        });
 
-	React.useEffect(() => {
-		const click$ = fromEvent(waitButton.current, 'dblclick');
+        return () => currentTimer$.unsubscribe();
+    }, [pause, currentTime, timer$]);
 
-		let dblclick$ = click$.pipe(
-			buffer(click$.pipe(debounceTime(300))),
-		);
+    React.useEffect(() => {
+        const click$ = fromEvent(waitButton.current, 'dblclick');
 
-		let sub = dblclick$.subscribe(() => {
-			setPause(true)
-		})
+        let dblclick$ = click$.pipe(
+            buffer(click$.pipe(debounceTime(300))),
+        );
 
-		return () => sub.unsubscribe();
-	}, [])
+        let sub = dblclick$.subscribe(() => {
+            setPause(true)
+        })
 
-	const handleStartStopReset = (pause, time = undefined) => {
-		setPause(pause);
-		
-		if (time !== undefined) {
-			setTime(time);
-		}
-	}
+        return () => sub.unsubscribe();
+    }, [])
 
-	const timeFormat = (time) => {
-    	return new Date(time * 1000).toISOString().substr(11, 8);
-  	};
+    const handleStartStopReset = (pause, time = undefined) => {
+        setPause(pause);
 
-  	return (
-    	<div className="app">
-      		<p>{timeFormat(currentTime)}</p>
+        if (time !== undefined) {
+            setTime(time);
+        }
+    }
 
-			{pause ? 
-				<button onClick={() => handleStartStopReset(false)}>Start</button> :
-				<button onClick={() => handleStartStopReset(true, 0)}>Stop</button>
-			}
-			  <button ref={waitButton}>Wait</button>
-			  <button onClick={() => handleStartStopReset(false, 0)}>Reset</button>
-  		</div>
-  	);
+    const timeFormat = (time) => {
+        return new Date(time * 1000).toISOString().substr(11, 8);
+    };
+
+    return (
+        <div className="app">
+            <p>{timeFormat(currentTime)}</p>
+
+            {pause ?
+                <button onClick={() => handleStartStopReset(false)}>Start</button> :
+                <button onClick={() => handleStartStopReset(true, 0)}>Stop</button>
+            }
+            <button ref={waitButton}>Wait</button>
+            <button onClick={() => handleStartStopReset(false, 0)}>Reset</button>
+        </div>
+    );
 }
 
 export default App;
